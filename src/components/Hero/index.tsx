@@ -13,42 +13,42 @@ interface iComentario {
 export default function Hero() {
   const [comentarios, setComentarios] = useState<iComentario[]>([]);
   const [lastId, setLastId] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storageComentarios = localStorage.getItem("comentarios") || "[]";
     const newComentarios = JSON.parse(storageComentarios);
 
     if (newComentarios.length > 0) {
-      const StorageLastId = newComentarios[newComentarios.length - 1].id;
-
-      setLastId(StorageLastId);
+      const storageLastId = newComentarios[newComentarios.length - 1].id;
+      setLastId(storageLastId);
     }
 
-    setComentarios(newComentarios);
+    const sortedComments = newComentarios.sort(
+      (a: iComentario, b: iComentario) =>
+        new Date(b.data).getTime() - new Date(a.data).getTime()
+    );
+
+    setComentarios(sortedComments);
+    setLoading(false);
   }, []);
 
   const addComment = (newComment: iComentario) => {
-    setComentarios([...comentarios, newComment]);
+    const updatedComentarios = [...comentarios, newComment];
 
-    localStorage.setItem(
-      "comentarios",
-      JSON.stringify([...comentarios, newComment])
+    const sortedComments = updatedComentarios.sort(
+      (a: iComentario, b: iComentario) =>
+        new Date(b.data).getTime() - new Date(a.data).getTime()
     );
 
+    localStorage.setItem("comentarios", JSON.stringify(sortedComments));
+    setComentarios(sortedComments);
     setLastId(newComment.id);
   };
 
-  const sortByDate = () => {
-    const sortedComments = comentarios.sort(
-      (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
-    );
-
-    setComentarios([...sortedComments]);
-  };
-
-  useEffect(() => {
-    sortByDate();
-  }, [comentarios]);
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="mb-4 max-w-[1200px] mx-auto ">
